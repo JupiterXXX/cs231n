@@ -407,7 +407,31 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    #pass
+    
+    N, C, H, W = x.shape
+    F, _, HH, WW = w.shape
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+
+    x_pad = np.pad(x, ((0,0),(0,0),(pad,pad),(pad,pad)), 'constant', constant_values = 0)
+    
+    H_out = 1 + (H + 2 * pad - HH) // stride
+    W_out = 1 + (W + 2 * pad - WW) // stride  
+    
+    #print('H_out',H_out)
+    #print('  ')
+    #print('W_out',W_out)
+    
+    out = np.zeros((N, F, H_out, W_out))
+    
+    for i in range(H_out):
+        for j in range(W_out):
+            for f in range(F):
+                for n in range(N):
+                    out[n, f, i, j]=(x_pad[n, :, i*stride:i*stride+HH, j*stride:j*stride+WW] * w[f, :, :, :]).sum() + b[f]
+    
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -432,7 +456,31 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+    #pass
+    x, w, b, conv_param = cache
+    N, C, H, W = x.shape
+    F, _, HH, WW = w.shape
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+    x_pad = np.pad(x, ((0,0),(0,0),(pad,pad),(pad,pad)), 'constant', constant_values = 0)
+
+    H_out = 1 + (H + 2 * pad - HH) / stride
+    W_out = 1 + (W + 2 * pad - WW) / stride  
+    
+    dx_pad = np.zeros_like(x_pad)
+    dx = np.zeros_like(x)
+    dw = np.zeros_like(w)
+    db = np.zeros_like(b)
+    
+    for n in range(N):
+        for f in range(F):
+            db[f] += dout[n,f].sum()
+            for i in range(H_out):
+                for j in range(W_out):
+                    dw[f] += x_pad[n, :, i*stride:i*stride+HH, j*stride:j*stride+WW] * dout[n, f, i, j]
+                    dx_pad[n, :, i*stride:i*stride+HH, j*stride:j*stride+WW] += w[f] * dout[n, f, i, j]
+    dx = dx_pad[:, :, pad:pad+H, pad:pad+W]
+    
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
