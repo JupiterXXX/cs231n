@@ -464,8 +464,8 @@ def conv_backward_naive(dout, cache):
     pad = conv_param['pad']
     x_pad = np.pad(x, ((0,0),(0,0),(pad,pad),(pad,pad)), 'constant', constant_values = 0)
 
-    H_out = 1 + (H + 2 * pad - HH) / stride
-    W_out = 1 + (W + 2 * pad - WW) / stride  
+    H_out = 1 + (H + 2 * pad - HH) // stride
+    W_out = 1 + (W + 2 * pad - WW) // stride  
     
     dx_pad = np.zeros_like(x_pad)
     dx = np.zeros_like(x)
@@ -506,7 +506,17 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # TODO: Implement the max pooling forward pass                            #
     ###########################################################################
-    pass
+    #pass
+    HH, WW, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    N, C, H, W = x.shape
+    H_out = 1 + (H - HH) // stride
+    W_out = 1 + (W - WW) // stride
+    out = np.zeros((N, C, H_out, W_out))
+    
+    for i in range(H_out):
+        for j in range(W_out):
+            x_mask = x[:,:,i*stride : i*stride+HH, j*stride : j*stride+WW]
+            out[:,:,i,j] = np.max(x_mask, axis=(2,3)) 
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -529,7 +539,23 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the max pooling backward pass                           #
     ###########################################################################
-    pass
+    #pass
+    x, pool_param = cache
+    HH, WW, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    N, C, H, W = x.shape
+    H_out = 1 + (H - HH) // stride
+    W_out = 1 + (W - WW) // stride
+    dx = np.zeros_like(x)
+    
+    for i in range(H_out):
+        for j in range(W_out):
+            x_mask = x[:,:,i*stride : i*stride+HH, j*stride : j*stride+WW]
+            max_x_mask = np.max(x_mask,axis=(2,3))# shape:(N,C)
+            #print('max_x_mask',max_x_mask.shape )
+            temp_binary_mask = (x_mask == (max_x_mask)[:,:,None,None]) #shape:(N,C,HH,WW) same as x_mask
+            #print('temp_mask',temp_binary_mask.shape )
+            dx[:,:,i*stride : i*stride+HH, j*stride : j*stride+WW] += temp_binary_mask * (dout[:,:,i,j])[:,:,None,None]
+            
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
