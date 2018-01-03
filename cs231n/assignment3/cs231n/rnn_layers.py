@@ -194,7 +194,7 @@ def word_embedding_forward(x, W):
     # HINT: This can be done in one line using NumPy's array indexing.           #
     ##############################################################################
     #pass
-    out = W[x, :]
+    out = W[x, :] #giving word vectors for all input words(many !!! (N,T))
     cache = x, W
     ##############################################################################
     #                               END OF YOUR CODE                             #
@@ -395,7 +395,19 @@ def lstm_forward(x, h0, Wx, Wh, b):
     # TODO: Implement the forward pass for an LSTM over an entire timeseries.   #
     # You should use the lstm_step_forward function that you just defined.      #
     #############################################################################
-    pass
+    #pass
+    N, T, D = x.shape
+    N, H = h0.shape
+    cache = []
+    h = np.zeros([N, T, H])
+    
+    prev_h = h0
+    prev_c = np.zeros_like(h0)
+    
+    for t in range(T):
+        prev_h, prev_c, cache_step = lstm_step_forward(x[:, t, :], prev_h, prev_c, Wx, Wh, b)
+        h[:, t, :] = prev_h
+        cache.append(cache_step)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -423,7 +435,31 @@ def lstm_backward(dh, cache):
     # TODO: Implement the backward pass for an LSTM over an entire timeseries.  #
     # You should use the lstm_step_backward function that you just defined.     #
     #############################################################################
-    pass
+    #pass
+    H, x, Wx, Wh, a, i, f, o, g, prev_c, prev_h, next_c, prev_h = cache[0]
+    
+    N, T, H = dh.shape
+    D, _ = Wx.shape
+    
+    dx = np.zeros([N, T, D])
+    dprev_h = np.zeros_like(prev_h)
+    dWx = np.zeros_like(Wx)
+    dWh = np.zeros_like(Wh)
+    db = np.zeros_like(b)
+    dprev_c = np.zeros_like(Wx)
+    
+    for t in reversed(range(T)):
+        cur_dh = dprev_h + dh[:,t,:]
+        dx, dprev_h, dprev_c, dWx, dWh, db
+        dx[:, t, :] ,dprev_h, dprev_c, dWx_step, dWh_step, db_step = lstm_step_backward(cur_dh, dprev_c, cache[t])
+        db += db_step
+        dWh += dWh_step
+        dWx += dWx_step
+    
+    # dh0 is the last hidden state gradient calculated
+    dh0 = dprev_h
+
+    
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
