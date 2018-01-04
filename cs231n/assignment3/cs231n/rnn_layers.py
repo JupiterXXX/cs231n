@@ -291,7 +291,7 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     next_c = f * prev_c + i * g
     next_h = o * np.tanh(next_c)
     
-    cache = (H, x, Wx, Wh, a, i, f, o, g, prev_c, prev_h, next_c, prev_h)
+    cache = (H, x, Wx, Wh, b, a, i, f, o, g, prev_c, prev_h, next_c, prev_h)
         
     ##############################################################################
     #                               END OF YOUR CODE                             #
@@ -328,17 +328,20 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     #reference:
     #http://practicalcryptography.com/miscellaneous/machine-learning/graphically-determining-backpropagation-equations/
     
-    H, x, Wx, Wh, a, i, f, o, g, prev_c, prev_h, next_c, prev_h = cache
+    H, x, Wx, Wh, b, a, i, f, o, g, prev_c, prev_h, next_c, prev_h = cache
     
     #next_h = o * np.tanh(next_c)
-    do = dnext_h * np.tanh(next_c)
-    dc = (1 - np.tanh(next_c) ** 2) * dnext_h * o 
+    dh_tanh = dnext_h * o
+    do = dnext_h * np.tanh(next_c) 
+    dtanh = dh_tanh * (1 - np.square(np.tanh(next_c)))
+    dtanh_dc = dnext_c + dtanh #add dnext_c and dtanh as during forward pass we split activation
+    
     #next_c = f * prev_c + i * g
-    dc += prev_c#计算dc时加上prev_c，因为在前向过程中，c还与下一步计算有关。  
-    df = dc * prev_c
-    dprev_c = dc * f
-    di = g * dc
-    dg = i * dc
+    
+    dprev_c = dtanh_dc * f
+    df = dtanh_dc * prev_c
+    di = g * dtanh_dc
+    dg = i * dtanh_dc
     
     #i = sigmoid(a_i)
     #f = sigmoid(a_f)
@@ -436,7 +439,7 @@ def lstm_backward(dh, cache):
     # You should use the lstm_step_backward function that you just defined.     #
     #############################################################################
     #pass
-    H, x, Wx, Wh, a, i, f, o, g, prev_c, prev_h, next_c, prev_h = cache[0]
+    H, x, Wx, Wh, b, a, i, f, o, g, prev_c, prev_h, next_c, prev_h = cache[0]
     
     N, T, H = dh.shape
     D, _ = Wx.shape
@@ -446,11 +449,10 @@ def lstm_backward(dh, cache):
     dWx = np.zeros_like(Wx)
     dWh = np.zeros_like(Wh)
     db = np.zeros_like(b)
-    dprev_c = np.zeros_like(Wx)
+    dprev_c = np.zeros_like(prev_h)
     
     for t in reversed(range(T)):
         cur_dh = dprev_h + dh[:,t,:]
-        dx, dprev_h, dprev_c, dWx, dWh, db
         dx[:, t, :] ,dprev_h, dprev_c, dWx_step, dWh_step, db_step = lstm_step_backward(cur_dh, dprev_c, cache[t])
         db += db_step
         dWh += dWh_step
