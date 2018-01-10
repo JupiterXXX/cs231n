@@ -107,7 +107,7 @@ def svm_loss_vectorized(W, X, y, reg):
   dW = X.T.dot(X_mask)
 
   dW /= num_train # average out weights
-  dW += reg*W # regularize the weights
+  dW += 2 * reg*W # regularize the weights
 
   #############################################################################
   #                             END OF YOUR CODE                              #

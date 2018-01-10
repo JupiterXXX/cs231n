@@ -77,8 +77,8 @@ class TwoLayerNet(object):
     # shape (N, C).                                                             #
     #############################################################################
     #pass
-    Hide = np.maximum(0 , X.dot(W1) + b1)
-    scores = Hide.dot(W2) + b2
+    Hide = np.maximum(0 , X.dot(W1) + b1) #ReLU
+    scores = Hide.dot(W2) + b2 
     
     #############################################################################
     #                              END OF YOUR CODE                             #
@@ -101,7 +101,9 @@ class TwoLayerNet(object):
     p_softmax = np.exp(re_scores)/np.sum(np.exp(re_scores), axis = 1).reshape(-1,1)
     loss = -np.sum(np.log(p_softmax[range(N), list(y)]))
     loss /= N
-    loss += 0.5 * reg * (np.sum(W1 * W1) + np.sum(W2 * W2))
+    loss += reg * (np.sum(W1 * W1) + np.sum(W2 * W2))
+    
+  
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -117,12 +119,12 @@ class TwoLayerNet(object):
     dscores = p_softmax.copy()
     dscores[range(N), list(y)] -= 1
     dscores /= N
-    grads['W2'] = Hide.T.dot(dscores) + reg * W2
+    grads['W2'] = Hide.T.dot(dscores) + 2 * reg * W2
     grads['b2'] = np.sum(dscores, axis = 0)
     
     dh = dscores.dot(W2.T)
     dh_ReLu = (Hide > 0) * dh
-    grads['W1'] = X.T.dot(dh_ReLu) + reg * W1
+    grads['W1'] = X.T.dot(dh_ReLu) + 2 * reg * W1
     grads['b1'] = np.sum(dh_ReLu, axis = 0)
     #############################################################################
     #                              END OF YOUR CODE                             #
